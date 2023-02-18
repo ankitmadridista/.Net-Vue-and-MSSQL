@@ -917,11 +917,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Learn\\Projects\\api\\WebApi\\WebApp\\WebApp.csproj",
+      "projectUniqueName": "C:\\Learn\\Projects\\.Net-Vue-and-MSSQL\\api\\WebApi\\WebApp\\WebApp.csproj",
       "projectName": "WebApp",
-      "projectPath": "C:\\Learn\\Projects\\api\\WebApi\\WebApp\\WebApp.csproj",
+      "projectPath": "C:\\Learn\\Projects\\.Net-Vue-and-MSSQL\\api\\WebApi\\WebApp\\WebApp.csproj",
       "packagesPath": "C:\\Users\\ankit\\.nuget\\packages\\",
-      "outputPath": "C:\\Learn\\Projects\\api\\WebApi\\WebApp\\obj\\",
+      "outputPath": "C:\\Learn\\Projects\\.Net-Vue-and-MSSQL\\api\\WebApi\\WebApp\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
