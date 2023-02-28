@@ -39,11 +39,9 @@ namespace WebApp.Migrations
 
             modelBuilder.Entity("WebApp.Models.Employee", b =>
                 {
-                    b.Property<int>("EmployeeId")
+                    b.Property<Guid>("EmployeeId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("EmployeeId"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("DateOfJoining")
                         .HasColumnType("datetime2");

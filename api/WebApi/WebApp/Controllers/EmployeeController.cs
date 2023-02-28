@@ -4,6 +4,8 @@ using System.Data.SqlClient;
 using System.Data;
 using System.Text.Json;
 using WebApp.Models;
+using WebApp.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace WebApp.Controllers
 {
@@ -11,16 +13,99 @@ namespace WebApp.Controllers
     [ApiController]
     public class EmployeeController : ControllerBase
     {
-        private readonly IConfiguration _configuration;
-        private readonly IWebHostEnvironment _environment;
-        public EmployeeController(IConfiguration configuration, IWebHostEnvironment webHostEnvironment)
+
+        private readonly WebAppDbContext dbContext;
+        public EmployeeController(WebAppDbContext dbContext)
         {
-            _configuration = configuration;
-            _environment = webHostEnvironment;
+            this.dbContext = dbContext;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetEmployees()
+        {
+            return Ok(await dbContext.Employees.ToListAsync());
+        }
+
+        [HttpGet]
+        [Route("{id:guid}")]
+        public async Task<IActionResult> GetEmployee([FromRoute] Guid id)
+        {
+
+            var employee = await dbContext.Employees.FindAsync(id);
+
+            if (employee == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(employee);
         }
 
 
+        [HttpPost]
+        public async Task<IActionResult> AddEmployees(AddEmployeeRequest addEmployeeRequest)
+        {
+            var employee = new Employee()
+            {
+                EmployeeId = Guid.NewGuid(),
+                EmployeeName = addEmployeeRequest.EmployeeName,
+                DateOfJoining= addEmployeeRequest.DateOfJoining,
+                Department=addEmployeeRequest.Department,
+                PhotoFileName=addEmployeeRequest.PhotoFileName
+            };
+
+            await dbContext.Employees.AddAsync(employee);
+            await dbContext.SaveChangesAsync();
+
+            return Ok(employee);
+        }
+
+        [HttpPut]
+        [Route("{id:guid}")]
+        public async Task<IActionResult> UpdateEmployee([FromRoute] Guid id, UpdateEmployeeRequest updateEmployeeRequest)
+        {
+            var employee = await dbContext.Employees.FindAsync(id);
+
+            if (employee != null)
+            {   
+                employee.EmployeeName = updateEmployeeRequest.EmployeeName;
+                employee.DateOfJoining = updateEmployeeRequest.DateOfJoining;
+                employee.Department = updateEmployeeRequest.Department;
+                employee.PhotoFileName= updateEmployeeRequest.PhotoFileName;
+
+                await dbContext.SaveChangesAsync();
+
+                return Ok(employee);
+            }
+
+            return NotFound();
+        }
+
+        [HttpDelete]
+        [Route("{id:guid}")]
+        public async Task<IActionResult> DeleteEmployee([FromRoute] Guid id)
+        {
+            var employee = await dbContext.Employees.FindAsync(id);
+
+            if (employee != null)
+            {
+                dbContext.Remove(employee);
+                await dbContext.SaveChangesAsync();
+                return Ok(employee);
+            }
+
+            return NotFound();
+        }
+
         #region without entity framework
+
+        //private readonly IConfiguration _configuration;
+        //private readonly IWebHostEnvironment _environment;
+        //public EmployeeController(IConfiguration configuration, IWebHostEnvironment webHostEnvironment)
+        //{
+        //    _configuration = configuration;
+        //    _environment = webHostEnvironment;
+        //}
         //[HttpGet]
         //public JsonResult Get()
         //{

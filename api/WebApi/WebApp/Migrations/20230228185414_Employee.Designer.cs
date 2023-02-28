@@ -12,8 +12,8 @@ using WebApp.Data;
 namespace WebApp.Migrations
 {
     [DbContext(typeof(WebAppDbContext))]
-    [Migration("20230227192131_initial migration")]
-    partial class initialmigration
+    [Migration("20230228185414_Employee")]
+    partial class Employee
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -42,11 +42,9 @@ namespace WebApp.Migrations
 
             modelBuilder.Entity("WebApp.Models.Employee", b =>
                 {
-                    b.Property<int>("EmployeeId")
+                    b.Property<Guid>("EmployeeId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("EmployeeId"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("DateOfJoining")
                         .HasColumnType("datetime2");

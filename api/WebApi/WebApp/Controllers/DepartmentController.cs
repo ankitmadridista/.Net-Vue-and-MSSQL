@@ -30,12 +30,7 @@ namespace WebApp.Controllers
     [Route("api/[controller]")]
     [ApiController]
     public class DepartmentController : ControllerBase
-    {
-        //private readonly IConfiguration _configuration;
-        //public DepartmentController(IConfiguration configuration)
-        //{
-        //    _configuration = configuration;
-        //}
+    {        
         private readonly WebAppDbContext dbContext;
         public DepartmentController(WebAppDbContext dbContext)
         {
@@ -115,6 +110,12 @@ namespace WebApp.Controllers
         }
 
         #region without entity framework
+        //private readonly IConfiguration _configuration;
+        //public DepartmentController(IConfiguration configuration)
+        //{
+        //    _configuration = configuration;
+        //}
+
         //[HttpGet]
         //public JsonResult Get()
         //{
