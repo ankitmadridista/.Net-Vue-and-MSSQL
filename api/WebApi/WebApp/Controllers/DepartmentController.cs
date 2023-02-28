@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using System.Data;
 using System.Data.SqlClient;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using WebApp.Data;
 using WebApp.Models;
 
 namespace WebApp.Controllers
@@ -29,119 +31,184 @@ namespace WebApp.Controllers
     [ApiController]
     public class DepartmentController : ControllerBase
     {
-        private readonly IConfiguration _configuration;
-        public DepartmentController(IConfiguration configuration)
+        //private readonly IConfiguration _configuration;
+        //public DepartmentController(IConfiguration configuration)
+        //{
+        //    _configuration = configuration;
+        //}
+        private readonly WebAppDbContext dbContext;
+        public DepartmentController(WebAppDbContext dbContext)
         {
-            _configuration = configuration;
+            this.dbContext = dbContext;
         }
-
 
         [HttpGet]
-        public JsonResult Get()
+        public async Task<IActionResult> GetDepartments()
         {
-            var options = new JsonSerializerOptions();
-            options.Converters.Add(new ExceptionConverter());
-
-            string query = @"
-                            select DepartmentId, DepartmentName from
-                            dbo.Department
-                            ";
-
-            DataTable table = new DataTable();
-            string sqlDataSource = _configuration.GetConnectionString("EmployeeAppCon");
-            SqlDataReader myReader;
-            using (SqlConnection myCon = new SqlConnection(sqlDataSource))
-            {
-                myCon.Open();
-                using (SqlCommand myCommand = new SqlCommand(query, myCon))
-                {
-                    myReader = myCommand.ExecuteReader();
-                    table.Load(myReader);
-                    myReader.Close();
-                    myCon.Close();
-                }
-            }
-
-            try
-            {
-                return new JsonResult(table);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(JsonSerializer.Serialize(ex, options));
-                return new JsonResult(JsonSerializer.Serialize(ex, options));
-            }
-
+            return Ok(await dbContext.Departments.ToListAsync());
         }
 
-        [HttpPost]
-        public JsonResult Post(Department department)
+        [HttpGet]
+        [Route("{id:guid}")]
+        public async Task<IActionResult> GetDepartment([FromRoute] Guid id)
         {
-            string query = @"
-                            INSERT INTO dbo.Department
-                            VALUES (@DepartmentName)
-                            ";
 
-            string sqlDataSource = _configuration.GetConnectionString("EmployeeAppCon");
-            using (SqlConnection myCon = new SqlConnection(sqlDataSource))
+            var department = await dbContext.Departments.FindAsync(id);
+
+            if (department == null)
             {
-                myCon.Open();
-                using (SqlCommand myCommand = new SqlCommand(query, myCon))
-                {
-                    myCommand.Parameters.AddWithValue("@DepartmentName", department.DepartmentName);
-                    myCommand.ExecuteReader();
-                    myCon.Close();
-                }
+                return NotFound();                
             }
-            return new JsonResult("Added Successfully");
+
+            return Ok(department);
+        }
+
+
+        [HttpPost]
+        public async Task<IActionResult> AddDepartments(AddDepartmentRequest addDepartmentRequest)
+        {
+            var dept = new Department()
+            {
+                DepartmentId = Guid.NewGuid(),
+                DepartmentName = addDepartmentRequest.DepartmentName
+            };
+
+            await dbContext.Departments.AddAsync(dept);
+            await dbContext.SaveChangesAsync();
+
+            return Ok(dept);
         }
 
         [HttpPut]
-        public JsonResult Put(Department department)
+        [Route("{id:guid}")]
+        public async Task<IActionResult> UpdateDepartment([FromRoute] Guid id, UpdateDepartmentRequest updateDepartmentRequest)
         {
-            string query = @"
-                            UPDATE dbo.Department
-                            SET DepartmentName = @DepartmentName
-                            WHERE  DepartmentId = @DepartmentId 
-                            ";
+            var department =  await dbContext.Departments.FindAsync(id);
 
-            string sqlDataSource = _configuration.GetConnectionString("EmployeeAppCon");
-            using (SqlConnection myCon = new SqlConnection(sqlDataSource))
+            if (department != null)
             {
-                myCon.Open();
-                using (SqlCommand myCommand = new SqlCommand(query, myCon))
-                {
-                    myCommand.Parameters.AddWithValue("@DepartmentId", department.DepartmentId);
-                    myCommand.Parameters.AddWithValue("@DepartmentName", department.DepartmentName);
-                    myCommand.ExecuteReader();
-                    myCon.Close();
-                }
+                department.DepartmentName = updateDepartmentRequest.DepartmentName;
+
+                await dbContext.SaveChangesAsync();
+
+                return Ok(department);
             }
 
-            return new JsonResult("Updated Successfully");
+            return NotFound();
         }
 
-        [HttpDelete("{id}")]
-        public JsonResult Delete(int id)
-        {
-            string query = @"
-                            DELETE dbo.Department
-                            WHERE  DepartmentId = @DepartmentId 
-                            ";
+        [HttpDelete]
+        [Route("{id:guid}")]
 
-            string sqlDataSource = _configuration.GetConnectionString("EmployeeAppCon");
-            using (SqlConnection myCon = new SqlConnection(sqlDataSource))
+        public async Task<IActionResult> DeleteDepartment([FromRoute] Guid id)
+        {
+            var department = await dbContext.Departments.FindAsync(id);
+
+            if (department != null)
             {
-                myCon.Open();
-                using (SqlCommand myCommand = new SqlCommand(query, myCon))
-                {
-                    myCommand.Parameters.AddWithValue("@DepartmentId", id);
-                    myCommand.ExecuteReader();
-                    myCon.Close();
-                }
+                dbContext.Remove(department);
+                await dbContext.SaveChangesAsync();
+                return Ok(department);
             }
 
-            return new JsonResult("Deleted Successfully");
+            return NotFound();
         }
+
+        #region without entity framework
+        //[HttpGet]
+        //public JsonResult Get()
+        //{
+        //    var options = new JsonSerializerOptions();
+        //    options.Converters.Add(new ExceptionConverter());
+
+        //    string query = "getDepartmentList";
+
+        //    DataTable table = new DataTable();
+        //    string sqlDataSource = _configuration.GetConnectionString("EmployeeAppCon");
+        //    SqlDataReader myReader;
+        //    using (SqlConnection myCon = new SqlConnection(sqlDataSource))
+        //    {
+        //        myCon.Open();
+        //        using (SqlCommand myCommand = new SqlCommand(query, myCon))
+        //        {
+        //            myReader = myCommand.ExecuteReader();
+        //            table.Load(myReader);
+        //            myReader.Close();
+        //            myCon.Close();
+        //        }
+        //    }
+
+        //    try
+        //    {
+        //        return new JsonResult(table);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine(JsonSerializer.Serialize(ex, options));
+        //        return new JsonResult(JsonSerializer.Serialize(ex, options));
+        //    }
+
+        //}
+
+        //[HttpPost]
+        //public JsonResult Post(Department department)
+        //{
+        //    string query = "addDepartment";
+
+        //    string sqlDataSource = _configuration.GetConnectionString("EmployeeAppCon");
+        //    using (SqlConnection myCon = new SqlConnection(sqlDataSource))
+        //    {
+        //        myCon.Open();
+        //        using (SqlCommand myCommand = new SqlCommand(query, myCon))
+        //        {
+        //            myCommand.Parameters.AddWithValue("@p_DepartmentName", department.DepartmentName);
+        //            myCommand.ExecuteReader();
+        //            myCon.Close();
+        //        }
+        //    }
+        //    return new JsonResult("Added Successfully");
+        //}
+
+        //[HttpPut]
+        //public JsonResult Put(Department department)
+        //{
+        //    string query = "chgDepartment";
+
+        //    string sqlDataSource = _configuration.GetConnectionString("EmployeeAppCon");
+        //    using (SqlConnection myCon = new SqlConnection(sqlDataSource))
+        //    {
+        //        myCon.Open();
+        //        using (SqlCommand myCommand = new SqlCommand(query, myCon))
+        //        {
+        //            myCommand.Parameters.AddWithValue("@p_DepartmentId", department.DepartmentId);
+        //            myCommand.Parameters.AddWithValue("@p_DepartmentName", department.DepartmentName);
+        //            myCommand.ExecuteReader();
+        //            myCon.Close();
+        //        }
+        //    }
+
+        //    return new JsonResult("Updated Successfully");
+        //}
+
+        //[HttpDelete("{id}")]
+        //public JsonResult Delete(int id)
+        //{
+        //    string query = "delDepartment";
+
+        //    string sqlDataSource = _configuration.GetConnectionString("EmployeeAppCon");
+        //    using (SqlConnection myCon = new SqlConnection(sqlDataSource))
+        //    {
+        //        myCon.Open();
+        //        using (SqlCommand myCommand = new SqlCommand(query, myCon))
+        //        {
+        //            myCommand.Parameters.AddWithValue("@p_DepartmentId", id);
+        //            myCommand.ExecuteReader();
+        //            myCon.Close();
+        //        }
+        //    }
+
+        //    return new JsonResult("Deleted Successfully");
+        //}
+        #endregion
     }
 }
